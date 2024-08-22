@@ -1,0 +1,13 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+watchtower = "==3.2.0"
+
+[dev-packages]
+pylint = "==3.2.6"
+
+[requires]
+python_version = "3.12"

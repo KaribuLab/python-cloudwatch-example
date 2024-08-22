@@ -1,0 +1,73 @@
+version: "3"
+
+dotenv: [".env"]
+
+tasks:
+  check:
+    requires:
+      vars:
+        - AWS_DEFAULT_REGION
+        - AWS_REGION
+        - AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY
+        - AWS_ACCOUNT_ID
+        - CLOUDWATCH_LOG_GROUP_NAME
+        - SLACK_WEBHOOK_URL
+    cmds:
+      - |
+        cwd=$( pwd )
+        if [ ! -f ${cwd}/.env ]; then
+          echo "Error: .env file not found in the current directory"
+          exit 1
+        fi
+    silent: true
+
+  infra:apply:
+    cmds:
+      - |
+        cd infra
+        terragrunt run-all apply --terragrunt-non-interactive
+  infra:destroy:
+    cmds:
+      - |
+        cd infra
+        terragrunt run-all destroy --terragrunt-non-interactive
+
+  notification:deploy:
+    cmds:
+      - |
+        cd notification
+        rm -rf output dist
+        npm install
+        cp -r node_modules output
+        npm run build
+        cd infra/terragrunt
+        terragrunt run-all apply --terragrunt-non-interactive
+  notification:undeploy:
+    cmds:
+      - |
+        cd notification/infra/terragrunt
+        terragrunt run-all destroy --terragrunt-non-interactive
+
+  python:run:
+    cmds:
+      - |
+        cd app
+        pipenv install
+        python main.py
+
+  default:
+    deps:
+      - check
+    cmds:
+      - task: infra:apply
+      - task: notification:deploy
+      - task: python:run
+
+  destroy:
+    deps:
+      - check
+    cmds:
+      - task: check
+      - task: notification:undeploy
+      - task: infra:destroy

@@ -1,0 +1,5 @@
+node_modules
+output
+dist
+.terragrunt-cache
+.terraform.lock.hcl
